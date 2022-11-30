@@ -25,13 +25,16 @@ Mode = 'train'
 DEBUG = 'False'
 DATASET = 'PEMSD8'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
-MODEL = 'RGSL'
+# MODEL = 'RGSL'
+MODEL = 'AGCRN'
 
 #get configuration
 config_file = './{}_{}.conf'.format(DATASET, MODEL)
+print(config_file)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
 config.read(config_file)
+print(config.sections())
 
 from lib.metrics import MAE_torch
 def masked_mae_loss(scaler, mask_value):
@@ -158,8 +161,7 @@ log_dir = os.path.join(current_dir,'experiments', args.dataset, current_time)
 args.log_dir = log_dir
 
 #start training
-trainer = Trainer(adj_mx, L_tilde, model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
-                  args, lr_scheduler=lr_scheduler)
+trainer = Trainer(adj_mx, L_tilde, model, loss, optimizer, train_loader, val_loader, test_loader, scaler, args, lr_scheduler=lr_scheduler)
 
 if args.mode == 'train':
     trainer.train()
