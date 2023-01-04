@@ -52,7 +52,21 @@ def normalize_dataset(data, normalizer, column_wise=False):
     return data, scaler
 
 
-def split_data_by_days(data, val_days, test_days, interval=60):
+# def split_data_by_days(data, val_days, test_days, interval=60):
+#     '''
+#     :param data: [B, *]
+#     :param val_days:
+#     :param test_days:
+#     :param interval: interval (15, 30, 60) minutes
+#     :return:
+#     '''
+#     T = int((24*60)/interval)
+#     test_data = data[-T*test_days:]
+#     val_data = data[-T*(test_days + val_days): -T*test_days]
+#     train_data = data[:-T*(test_days + val_days)]
+#     return train_data, val_data, test_data
+
+def split_data_by_days(data, val_days, test_days):
     '''
     :param data: [B, *]
     :param val_days:
@@ -60,10 +74,9 @@ def split_data_by_days(data, val_days, test_days, interval=60):
     :param interval: interval (15, 30, 60) minutes
     :return:
     '''
-    T = int((24*60)/interval)
-    test_data = data[-T*test_days:]
-    val_data = data[-T*(test_days + val_days): -T*test_days]
-    train_data = data[:-T*(test_days + val_days)]
+    test_data = data[:,:test_days,:]
+    val_data = data[:,test_days: test_days + val_days,:]
+    train_data = data[:,test_days + val_days,:]
     return train_data, val_data, test_data
 
 
@@ -89,7 +102,8 @@ def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False
     #load raw st dataset
     data = load_st_dataset(args.dataset)        # B, N, D
     #normalize st data
-    data, scaler = normalize_dataset(data, normalizer, args.column_wise)
+    # data, scaler = normalize_dataset(data, normalizer, args.column_wise)
+    scaler = None
     #spilit dataset by days or by ratio
     if args.test_ratio > 1:
         data_train, data_val, data_test = split_data_by_days(data, args.val_ratio, args.test_ratio)

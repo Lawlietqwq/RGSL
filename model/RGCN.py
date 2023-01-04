@@ -48,7 +48,7 @@ class AVWGCN(nn.Module):
         x = self.init_gconv(x)
         x_g1 = torch.einsum("knm,bmc->bknc", graph_supports, x)
         x_g1 = x_g1.permute(0, 2, 1, 3).reshape(b, n, -1)  # B, N, cheb_k, dim_in
-        x_gconv1 = self.conv(x_g1)
+        x_gconv1 = self.gconv(x_g1)
 
         # 3) fusion of explit knowledge and implicit knowledge
         x_gconv = self.dy_gate1(F.leaky_relu(x_gconv0).transpose(1,2)) + self.dy_gate2(F.leaky_relu(x_gconv1).transpose(1,2))

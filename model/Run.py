@@ -1,6 +1,9 @@
 
 import os
 import sys
+
+from util.section_industry import SectorPreprocessor
+
 file_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print(file_dir)
 sys.path.append(file_dir)
@@ -23,13 +26,14 @@ from lib.utils import get_adjacency_matrix, scaled_Laplacian, cheb_polynomial
 #*************************************************************************#
 Mode = 'train'
 DEBUG = 'False'
-DATASET = 'PEMSD8'      #PEMSD4 or PEMSD8
+DATASET = 'rpsdata'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
 # MODEL = 'RGSL'
 MODEL = 'AGCRN'
 
 #get configuration
-config_file = './{}_{}.conf'.format(DATASET, MODEL)
+# config_file = './{}_{}.conf'.format(DATASET, MODEL)
+config_file = './test.conf'
 print(config_file)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
@@ -109,7 +113,14 @@ if config.has_option('data', 'id_filename'):
     id_filename = config['data']['id_filename']
 else:
     id_filename = None
-adj_mx, distance_mx = get_adjacency_matrix(args.adj_filename, args.num_nodes, id_filename)
+# adj_mx, distance_mx = get_adjacency_matrix(args.adj_filename, args.num_nodes, id_filename)
+processor = SectorPreprocessor(args.path, args.market)
+
+adj_mx = processor.generate_sector_relation(
+        os.path.join('../data/rpsdata/industry_relation.json'),
+        'data/rpsdata/code_list.csv'
+    )
+
 L_tilde = scaled_Laplacian(adj_mx)
 cheb_polynomials = [torch.from_numpy(i).type(torch.FloatTensor).to(args.device) for i in cheb_polynomial(L_tilde, args.cheb_k)]
 

@@ -1,6 +1,7 @@
 import numpy as np
 
 def Add_Window_Horizon(data, window=3, horizon=1, single=False):
+# def Add_Window_Horizon(data, window=2, horizon=1, single=True):
     '''
     时序数据切片
     :param data: shape [B, ...]
