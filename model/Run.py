@@ -27,6 +27,7 @@ from lib.utils import get_adjacency_matrix, scaled_Laplacian, cheb_polynomial
 Mode = 'train'
 DEBUG = 'False'
 DATASET = 'rpsdata'      #PEMSD4 or PEMSD8
+# DATASET = 'PEMSD8'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
 # MODEL = 'RGSL'
 MODEL = 'AGCRN'
@@ -114,12 +115,13 @@ if config.has_option('data', 'id_filename'):
 else:
     id_filename = None
 # adj_mx, distance_mx = get_adjacency_matrix(args.adj_filename, args.num_nodes, id_filename)
-processor = SectorPreprocessor(args.path, args.market)
+processor = SectorPreprocessor("", "")
 
 adj_mx = processor.generate_sector_relation(
         os.path.join('../data/rpsdata/industry_relation.json'),
         'data/rpsdata/code_list.csv'
     )
+adj_mx = adj_mx.astype(np.float32)
 
 L_tilde = scaled_Laplacian(adj_mx)
 cheb_polynomials = [torch.from_numpy(i).type(torch.FloatTensor).to(args.device) for i in cheb_polynomial(L_tilde, args.cheb_k)]
@@ -141,7 +143,7 @@ print_model_parameters(model, only_num=False)
 train_loader, val_loader, test_loader, scaler = get_dataloader(args,
                                                                normalizer=args.normalizer,
                                                                tod=args.tod, dow=False,
-                                                               weather=False, single=False)
+                                                               weather=False, single=True)
 
 #init loss function, optimizer
 if args.loss_func == 'mask_mae':

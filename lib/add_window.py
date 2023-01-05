@@ -1,7 +1,7 @@
 import numpy as np
 
-def Add_Window_Horizon(data, window=3, horizon=1, single=False):
-# def Add_Window_Horizon(data, window=2, horizon=1, single=True):
+# def Add_Window_Horizon(data, window=3, horizon=1, single=False):
+def Add_Window_Horizon(data, window=2, horizon=1, single=True):
     '''
     时序数据切片
     :param data: shape [B, ...]
@@ -9,15 +9,15 @@ def Add_Window_Horizon(data, window=3, horizon=1, single=False):
     :param horizon:
     :return: X is [B, W, ...], Y is [B, H, ...]
     '''
-    length = len(data)
+    length = data.shape[0]
     end_index = length - horizon - window + 1
     X = []      #windows
     Y = []      #horizon
     index = 0
     if single:
         while index < end_index:
-            X.append(data[index:index+window])
-            Y.append(data[index+window+horizon-1:index+window+horizon])
+            X.append(data[index:index+window, ...])
+            Y.append(data[index+window+horizon-1:index+window+horizon, :, :1])
             index = index + 1
     else:
         while index < end_index:

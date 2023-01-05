@@ -159,7 +159,9 @@ def scaled_Laplacian(W):
     ----------
     scaled_Laplacian: np.ndarray, shape (N, N)
     '''
-
+    print(W)
+    print(W.shape[0])
+    print(W.shape[1])
     assert W.shape[0] == W.shape[1]
 
     D = np.diag(np.sum(W, axis=1))

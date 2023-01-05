@@ -3,7 +3,7 @@ import numpy as np
 import torch.utils.data
 from lib.add_window import Add_Window_Horizon
 from lib.load_dataset import load_st_dataset
-from lib.normalization import NScaler, MinMax01Scaler, MinMax11Scaler, StandardScaler, ColumnMinMaxScaler
+from lib.normalization import NScaler, MinMax01Scaler, MinMax11Scaler, StandardScaler, ColumnMinMaxScaler, MMScaler
 
 
 def normalize_dataset(data, normalizer, column_wise=False):
@@ -74,9 +74,11 @@ def split_data_by_days(data, val_days, test_days):
     :param interval: interval (15, 30, 60) minutes
     :return:
     '''
-    test_data = data[:,:test_days,:]
-    val_data = data[:,test_days: test_days + val_days,:]
-    train_data = data[:,test_days + val_days,:]
+    val_days = int(val_days)
+    test_days = int(test_days)
+    test_data = data[:test_days]
+    val_data = data[test_days: test_days + val_days]
+    train_data = data[test_days + val_days:]
     return train_data, val_data, test_data
 
 
@@ -103,7 +105,7 @@ def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False
     data = load_st_dataset(args.dataset)        # B, N, D
     #normalize st data
     # data, scaler = normalize_dataset(data, normalizer, args.column_wise)
-    scaler = None
+    scaler = MMScaler(0, 100)
     #spilit dataset by days or by ratio
     if args.test_ratio > 1:
         data_train, data_val, data_test = split_data_by_days(data, args.val_ratio, args.test_ratio)
@@ -117,7 +119,7 @@ def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False
     print('Val: ', x_val.shape, y_val.shape)
     print('Test: ', x_test.shape, y_test.shape)
     ##############get dataloader######################
-    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=True, drop_last=True)
+    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=False, drop_last=True)
     if len(x_val) == 0:
         val_dataloader = None
     else:

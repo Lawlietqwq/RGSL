@@ -91,8 +91,9 @@ class Trainer(object):
                 teacher_forcing_ratio = 1.
             #data and target shape: B, T, N, F; output shape: B, T, N, F
             output = self.model(data, target, teacher_forcing_ratio=teacher_forcing_ratio)
-            if self.args.real_value:
-                label = self.scaler.inverse_transform(label)
+            # output = self.model(data, target, teacher_forcing_ratio=teacher_forcing_ratio)
+            # if self.args.real_value:
+            #     label = self.scaler.inverse_transform(label)
             loss = self.loss(output.cuda(), label)
             if epoch < 30:
                 rebuild_loss = (1-float(epoch)/self.args.epochs) * 0. * self.rebuild_loss(use_gumbel=True)
@@ -210,11 +211,14 @@ class Trainer(object):
                 output = model(data, target, teacher_forcing_ratio=0)
                 y_true.append(label)
                 y_pred.append(output)
-        y_true = scaler.inverse_transform(torch.cat(y_true, dim=0))
+        # y_true = scaler.inverse_transform(torch.cat(y_true, dim=0))
+        y_true = torch.cat(y_true, dim=0)
         if args.real_value:
             y_pred = torch.cat(y_pred, dim=0)
         else:
-            y_pred = scaler.inverse_transform(torch.cat(y_pred, dim=0))
+            y_pred = torch.cat(y_pred, dim=0)
+        # else:
+        #     y_pred = scaler.inverse_transform(torch.cat(y_pred, dim=0))
         np.save('./{}_true.npy'.format(args.dataset), y_true.cpu().numpy())
         np.save('./{}_pred.npy'.format(args.dataset), y_pred.cpu().numpy())
         for t in range(y_true.shape[1]):
