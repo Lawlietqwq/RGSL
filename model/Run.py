@@ -150,6 +150,7 @@ if args.loss_func == 'mask_mae':
     loss = masked_mae_loss(scaler, mask_value=0.0)
 elif args.loss_func == 'mae':
     loss = torch.nn.SmoothL1Loss().to(args.device)
+    # loss = torch.nn.L1Loss().to(args.device)
 elif args.loss_func == 'mse':
     loss = torch.nn.MSELoss().to(args.device)
 else:

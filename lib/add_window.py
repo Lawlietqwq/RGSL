@@ -10,6 +10,7 @@ def Add_Window_Horizon(data, window=2, horizon=1, single=True):
     :return: X is [B, W, ...], Y is [B, H, ...]
     '''
     length = data.shape[0]
+    # length = len(data)
     end_index = length - horizon - window + 1
     X = []      #windows
     Y = []      #horizon

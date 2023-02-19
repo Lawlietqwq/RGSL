@@ -100,12 +100,12 @@ def data_loader(X, Y, batch_size, shuffle=True, drop_last=True):
     return dataloader
 
 
-def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False, single=True):
+def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False, single=False):
     #load raw st dataset
     data = load_st_dataset(args.dataset)        # B, N, D
     #normalize st data
-    # data, scaler = normalize_dataset(data, normalizer, args.column_wise)
-    scaler = MMScaler(0, 100)
+    data, scaler = normalize_dataset(data, normalizer, args.column_wise)
+    # scaler = MMScaler(0, 100)
     #spilit dataset by days or by ratio
     if args.test_ratio > 1:
         data_train, data_val, data_test = split_data_by_days(data, args.val_ratio, args.test_ratio)
@@ -119,7 +119,7 @@ def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False
     print('Val: ', x_val.shape, y_val.shape)
     print('Test: ', x_test.shape, y_test.shape)
     ##############get dataloader######################
-    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=False, drop_last=True)
+    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=True, drop_last=True)
     if len(x_val) == 0:
         val_dataloader = None
     else:
