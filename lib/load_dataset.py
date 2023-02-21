@@ -12,6 +12,10 @@ def load_st_dataset(dataset):
     elif dataset == 'rpsdata':
         data_path = os.path.join('../data/rpsdata/rps_data.npy')
         data = np.load(data_path)
+        # df = pro.index_classify(level='L2', src='SW2021', fields='index_code,industry_name')
+        # df.index = df['index_code']
+        # df = pro.index_member(index_code='850531.SI')["out_date"==None].con_code
+        # pro.sw_daily()
     else:
         raise ValueError
     if len(data.shape) == 2:

@@ -1,15 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="RGSL" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="HIST">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$/../HIST" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="RGSL">
+      <paths name="user@121.89.234.19:12500 password">
         <serverdata>
           <mappings>
             <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
