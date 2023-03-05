@@ -103,7 +103,7 @@ args.add_argument('--plot', default=config['log']['plot'], type=eval)
 args.add_argument('--model-ema-decay', type=float, default=0.999,
                     help='decay factor for model weights moving average (default: 0.9998)')
 args = args.parse_args()
-init_seed(args.seed)
+# init_seed(args.seed)
 if torch.cuda.is_available():
     torch.cuda.set_device(int(args.device[5]))
 else:

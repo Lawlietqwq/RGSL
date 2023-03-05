@@ -1,16 +1,19 @@
 import math
 import numpy as np
-import scipy.stats as sps
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+# import scipy.stats as sps
+# from sklearn.metrics import mean_squared_error, mean_absolute_error
 import json
+import pandas as pd
+# 计算MRR和IRR
+def evaluate(prediction,ground_truth, report=False):
 
-def evaluate(prediction, ground_truth, price_change,mask, report=False):
-    assert ground_truth.shape == prediction.shape, 'shape mis-match'
+    # assert ground_truth.shape == prediction.shape, 'shape mis-match'
+    price_change = pd.read_csv('pct_change.csv')
     performance = {}
     # performance['mse'] = np.linalg.norm((prediction - ground_truth) * mask)**2\
     #     / np.sum(mask)
-    performance['MAE']=mean_absolute_error(prediction,ground_truth)
-    performance['MSE']=mean_squared_error(prediction,ground_truth)
+    # performance['MAE']=mean_absolute_error(prediction,ground_truth)
+    # performance['MSE']=mean_squared_error(prediction,ground_truth)
     mrr_top = 0.0
     all_miss_days_top = 0
     bt_long = 1.0
@@ -62,7 +65,7 @@ def evaluate(prediction, ground_truth, price_change,mask, report=False):
 
         # for j in range(1, prediction.shape[0] + 1):
         # index=prediction.shape[0]
-        gt=ground_truth[:, i]
+        # gt=ground_truth[:, i]
         # print("gt:",gt)
         # print("rank_gt:",rank_gt)
         for index,cur_rank in enumerate(pre_top1):
@@ -103,6 +106,8 @@ def evaluate(prediction, ground_truth, price_change,mask, report=False):
         # print("*"*20)
         for pre in pre_top10:
             real_ret_rat_top10 += price_change[pre][i]
+
+
             # print("price_change:",price_change[pre][i])
         # print("price_change:",price_change[pre][i])
         real_ret_rat_top10 /= 10

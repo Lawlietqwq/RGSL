@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -9,7 +10,10 @@ import numpy as np
 from lib.logger import get_logger
 from lib.metrics import All_Metrics
 from timm.utils import ModelEmaV2
+from util.evaluator import evaluate
+import tushare as ts
 
+result = pd.DataFrame()
 
 class Trainer(object):
     def __init__(self, adj_mx, L_tilde, model, loss, optimizer, train_loader, val_loader, test_loader,
@@ -233,10 +237,12 @@ class Trainer(object):
         for t in range(y_true.shape[1]):
             mae, rmse, mape, _, _ = All_Metrics(y_pred[:, t, ...], y_true[:, t, ...],
                                                 args.mae_thresh, args.mape_thresh)
-            logger.info("Horizon {:02d}, MAE: {:.2f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
+            logger.info("Horizon {:02d}, MAE: {:.4f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                 t + 1, mae, rmse, mape*100))
+        performance = evaluate(y_pred,y_true)
+        result.append(performance)
         mae, rmse, mape, _, _ = All_Metrics(y_pred, y_true, args.mae_thresh, args.mape_thresh)
-        logger.info("Average Horizon, MAE: {:.2f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
+        logger.info("Average Horizon, MAE: {:.4f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                     mae, rmse, mape*100))
 
     @staticmethod

@@ -71,7 +71,10 @@ def MAPE_torch(pred, true, mask_value=None):
         mask = torch.gt(true, mask_value)
         pred = torch.masked_select(pred, mask)
         true = torch.masked_select(true, mask)
-    return torch.mean(torch.abs(torch.div((true - pred), true)))
+        tmp = torch.abs(torch.div((true - pred), true))
+        # mask2 = tmp.gt(tmp, 2.0)
+        # tmp = torch.masked_select(tmp, mask2)
+    return torch.mean(tmp)
 
 
 def PNBI_torch(pred, true, mask_value=None):
