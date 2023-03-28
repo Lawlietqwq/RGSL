@@ -13,7 +13,7 @@ from timm.utils import ModelEmaV2
 from util.evaluator import evaluate
 import tushare as ts
 
-result = pd.DataFrame()
+# result = pd.DataFrame()
 
 class Trainer(object):
     def __init__(self, adj_mx, L_tilde, model, loss, optimizer, train_loader, val_loader, test_loader,
@@ -67,7 +67,8 @@ class Trainer(object):
             for batch_idx, (data, target) in enumerate(val_dataloader):
                 data = data[..., :self.args.input_dim]
                 label = target[..., :self.args.output_dim]
-                output = model(data, target, teacher_forcing_ratio=0.)
+                # output = model(data, target, teacher_forcing_ratio=0.)
+                output = model(data)
                 # max_val = torch.max(output, 2).values.unsqueeze(-1)
                 # min_val = torch.min(output, 2).values.unsqueeze(-1)
                 # output = (output - min_val) / (max_val - min_val)
@@ -101,14 +102,16 @@ class Trainer(object):
             # max_val = torch.max(output, 2).values.unsqueeze(-1)
             # min_val = torch.min(output, 2).values.unsqueeze(-1)
             # output = (output - min_val) / (max_val - min_val)
-            output = self.model(data, target, teacher_forcing_ratio=teacher_forcing_ratio)
+            # output = self.model(data, target, teacher_forcing_ratio=teacher_forcing_ratio)
+            output = self.model(data)
+
             if self.args.real_value:
                 label = self.scaler.inverse_transform(label)
             loss = self.loss(output.cuda(), label)
-            if epoch < 30:
-                rebuild_loss = (1-float(epoch)/self.args.epochs) * 0. * self.rebuild_loss(use_gumbel=True)
-            else:
-                rebuild_loss = (1-float(epoch)/self.args.epochs) * 0. * self.rebuild_loss(use_gumbel=True)
+            # if epoch < 30:
+            #     rebuild_loss = (1-float(epoch)/self.args.epochs) * 0. * self.rebuild_loss(use_gumbel=True)
+            # else:
+            #     rebuild_loss = (1-float(epoch)/self.args.epochs) * 0. * self.rebuild_loss(use_gumbel=True)
             all_loss = loss
 
             all_loss.backward()
@@ -122,8 +125,10 @@ class Trainer(object):
 
             #log information
             if batch_idx % self.args.log_step == 0:
-                self.logger.info('Train Epoch {}: {}/{} Loss: {:.6f} rebuild Loss: {:.6f} Total: {:.6f}'.format(
-                    epoch, batch_idx, self.train_per_epoch, loss.item(), rebuild_loss.item(), all_loss.item()))
+                # self.logger.info('Train Epoch {}: {}/{} Loss: {:.6f} rebuild Loss: {:.6f} Total: {:.6f}'.format(
+                #     epoch, batch_idx, self.train_per_epoch, loss.item(), rebuild_loss.item(), all_loss.item()))
+                self.logger.info('Train Epoch {}: {}/{} Loss: {:.6f} Total: {:.6f}'.format(
+                    epoch, batch_idx, self.train_per_epoch, loss.item(), all_loss.item()))
         train_epoch_loss = total_loss/self.train_per_epoch
         self.logger.info('**********Train Epoch {}: averaged Loss: {:.6f}, tf_ratio: {:.6f}'.format(epoch, train_epoch_loss, teacher_forcing_ratio))
 
@@ -190,9 +195,10 @@ class Trainer(object):
         #test
         self.model.load_state_dict(best_model)
         #self.val_epoch(self.args.epochs, self.test_loader)
-        self.test(self.model, self.args, self.test_loader, self.scaler, self.logger)
+        performence = self.test(self.model, self.args, self.test_loader, self.scaler, self.logger)
         self.logger.info("##################EMA####################")
         self.test(self.ema_model.module, self.args, self.test_loader, self.scaler, self.logger)
+        return performence
 
     def save_checkpoint(self):
         state = {
@@ -218,20 +224,21 @@ class Trainer(object):
             for batch_idx, (data, target) in enumerate(data_loader):
                 data = data[..., :args.input_dim]
                 label = target[..., :args.output_dim]
-                output = model(data, target, teacher_forcing_ratio=0)
+                # output = model(data, target, teacher_forcing_ratio=0)
+                output = model(data)
                 # max_val = torch.max(output, 2).values.unsqueeze(-1)
-                # min_val = torch.min(output, 2).values.unsqueeze(-1)
+                # min_val = torcx2h.min(output, 2).values.unsqueeze(-1)
                 # output = (output - min_val) / (max_val - min_val)
                 y_true.append(label)
                 y_pred.append(output)
-        y_true = scaler.inverse_transform(torch.cat(y_true, dim=0))
-        # y_true = torch.cat(y_true, dim=0)
+        # y_true = scaler.inverse_transform(torch.cat(y_true, dim=0))
+        y_true = torch.cat(y_true, dim=0)
         if args.real_value:
             y_pred = torch.cat(y_pred, dim=0)
-        # else:
-        #     y_pred = torch.cat(y_pred, dim=0)
         else:
-            y_pred = scaler.inverse_transform(torch.cat(y_pred, dim=0))
+            y_pred = torch.cat(y_pred, dim=0)
+        # else:
+            # y_pred = scaler.inverse_transform(torch.cat(y_pred, dim=0))
         np.save('./{}_true.npy'.format(args.dataset), y_true.cpu().numpy())
         np.save('./{}_pred.npy'.format(args.dataset), y_pred.cpu().numpy())
         for t in range(y_true.shape[1]):
@@ -239,11 +246,20 @@ class Trainer(object):
                                                 args.mae_thresh, args.mape_thresh)
             logger.info("Horizon {:02d}, MAE: {:.4f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                 t + 1, mae, rmse, mape*100))
-        performance = evaluate(y_pred,y_true)
-        result.append(performance)
+        price_change = pd.read_csv('../util/pct_change.csv', index_col=0)
+        data_len = int(args.test_ratio - args.lag)
+        if y_pred.shape[0] == data_len:
+            price_change = price_change[-data_len:].to_numpy()
+        else:
+            price_change = price_change[-data_len:y_pred.shape[0]-data_len].to_numpy()
+        performance = evaluate(y_pred.cpu().numpy()[:,0,:,0],y_true.cpu().numpy(), price_change)
         mae, rmse, mape, _, _ = All_Metrics(y_pred, y_true, args.mae_thresh, args.mape_thresh)
+        performance['MAE'] = mae.item()
+        # result.append(performance)
         logger.info("Average Horizon, MAE: {:.4f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                     mae, rmse, mape*100))
+        return performance
+
 
     @staticmethod
     def _compute_sampling_threshold(global_step, k):

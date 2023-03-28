@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 # from scipy.sparse.linalg import eigs
 from model.RGSLCell import RGSLCell
+# import matplotlib.pyplot as plt
 
 Tensor = torch.Tensor
 
@@ -181,7 +182,8 @@ class RGSL(nn.Module):
         self.tilde = tilde
         return adj, tilde
 
-    def forward(self, source, targets, teacher_forcing_ratio=0.5):
+    # def forward(self, source, targets, teacher_forcing_ratio=0.5):
+    def forward(self, source):
         #source: B, T_1, N, D
         #target: B, T_2, N, D
         #supports = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec1.transpose(0,1))), dim=1)
@@ -199,4 +201,5 @@ class RGSL(nn.Module):
         output = output.squeeze(-1).reshape(-1, self.horizon, self.output_dim, self.num_node)
         output = output.permute(0, 1, 3, 2)                             #B, T, N, C
 
+        # output = nn.
         return output

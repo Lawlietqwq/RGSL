@@ -12,6 +12,12 @@ import math
 import json
 #使用之前先输入token，可以从个人主页上复制出来，
 #每次调用数据需要先运行该命令
+from jqdatasdk import *
+auth('18974988801', 'Bigdata12345678')
+
+# industry2 = get_industries(name='sw_l2', date="2020-05-07")
+industry = get_industries(name='sw_l1', date='2020-07-07')
+code_lists = list(industry.index)
 
 ts.set_token('ff64b8b56c9ae9eac1389d7827b79dd578a060338fbaa7794fd9c6d4')
 pro = ts.pro_api()
@@ -36,25 +42,30 @@ end_time = str(endtime)
 # one_year_time = str(get_date_bef(end_time, 1))
 
 #获取行业代码与名称
-df = pro.index_classify(level='L2', src='SW2021',fields='index_code,industry_name')
-df.index=df['index_code']
+# df = pro.index_classify(level='L2', src='SW2021',fields='index_code,industry_name')
+# df.index=df['index_code']
 
 
 #获取一段时间的所有的行业数据
-def getdatas():
-    length=len(df)
+def getdatas(date_length):
+    length=len(code_lists)
     datas={}
     times=[]
     count=1
-    tscode=list(df['index_code'])
+    # tscode=list(df['index_code'])
+    tscode=code_lists
     # for i,tscode in enumerate(df['index_code']):
     while tscode:
         print("代码{}，这是第{}个，还剩{}个".format(tscode[0],count,length-count))
         try:
             #我这里的周期是一年，one_year_time 是选中时间一年前的日期
-            df1 = pro.sw_daily(ts_code=tscode[0], start_date="20211102", end_date="20220812", fields='ts_code,trade_date,close')[0:134]
+            # df1 = pro.sw_daily(ts_code=tscode[0], start_date="20211102", end_date="20220812", fields='ts_code,trade_date,close')[0:134]
+            # df1 = pro.sw_daily(ts_code=tscode[0], start_date="20211102", end_date="20230228", fields='ts_code,trade_date,close')
+            df1=finance.run_query(query(finance.SW1_DAILY_PRICE).filter(finance.SW1_DAILY_PRICE.code==tscode[0],
+                                                                        finance.SW1_DAILY_PRICE.date >= '2005-01-04',
+                                                                        finance.SW1_DAILY_PRICE.date <= '2021-12-10'))
             print("len:",len(df1))
-            if len(df1)<134:
+            if len(df1)<date_length:
                 print('{}指数不存在或者数据量太小'.format(tscode[0]))
                 tscode.pop(0)
                 continue
@@ -65,7 +76,7 @@ def getdatas():
 
             #获取时间序列作为x轴
             if len(times)==0:
-                times=df1['trade_date']
+                times=df1['date']
             # time.sleep(1)
         except Exception as e:
             print('出现提交错误，之后将会重新提交')
@@ -86,11 +97,13 @@ def getRPS(end_time,all_stocks):
     for n in arr_N:
         # rank
         # print(len(all_stocks))
-        s_rank = (all_stocks.iloc[0]/all_stocks.iloc[n]).sort_values(ascending=False).rank(method='dense')
+        # s_rank = (all_stocks.iloc[0]/all_stocks.iloc[n]).sort_values(ascending=False).rank(method='dense')
+        # s_rank = (all_stocks.iloc[0]/all_stocks.iloc[n]).rank(method='dense')
+        s_rank = (all_stocks.iloc[-1]/all_stocks.iloc[-1-n]).rank(method='dense')
         # 归一
         s_rps = (100*(s_rank - s_rank.min()))/(s_rank.max()-s_rank.min())
         # 写入字典
-        s_rps=s_rps.sort_index()
+        # s_rps=s_rps.sort_index()
         dict_rps[n] = s_rps.to_dict()
     # print(dict_rps)
     # rps = dict_rps[10]
@@ -100,7 +113,6 @@ def getRPS(end_time,all_stocks):
 # 将数据转化为热力图数据
 def get_reli_datatype():
     industrys_list=[]
-    names_list=[]
     times_list=[]
     dicts1={}
     dicts3={}
@@ -109,17 +121,16 @@ def get_reli_datatype():
     dicts15={}
     dicts20={}
     dicts={}
-    with open('p_label.json','r',encoding='utf-8') as f :
+    with open('../data/rpsdata/p_label.json','r',encoding='utf-8') as f :
             loads = json.loads(f.read())
-            times_list=loads.keys()
-            for key in loads['20220401']['20'].keys():
-                    industrys_list.append(key)
-            for ind in industrys_list:
-                name=df.at[ind,'industry_name']
-                names_list.append(name)
+            times_list=loads['date']
+            industrys_list = loads['code']
+            # for ind in industrys_list:
+            #     name=df.at[ind,'industry_name']
+            #     names_list.append(name)
             # for name in names_list:
             for ind in industrys_list:
-                    name=df.at[ind,'industry_name']
+                    # name=df.at[ind,'industry_name']
                     price_list1=[]
                     price_list3=[]
                     price_list5=[]
@@ -128,12 +139,12 @@ def get_reli_datatype():
                     price_list20=[]
 
                     for mytime in times_list:
-                            price_list1.append(math.floor(loads[mytime]['1'][ind]))
-                            price_list3.append(math.floor(loads[mytime]['3'][ind]))
-                            price_list5.append(math.floor(loads[mytime]['5'][ind]))
-                            price_list10.append(math.floor(loads[mytime]['10'][ind]))
-                            price_list15.append(math.floor(loads[mytime]['15'][ind]))
-                            price_list20.append(math.floor(loads[mytime]['20'][ind]))
+                            price_list1.append(math.floor(loads['data'][mytime]['1'][ind]))
+                            price_list3.append(math.floor(loads['data'][mytime]['3'][ind]))
+                            price_list5.append(math.floor(loads['data'][mytime]['5'][ind]))
+                            price_list10.append(math.floor(loads['data'][mytime]['10'][ind]))
+                            price_list15.append(math.floor(loads['data'][mytime]['15'][ind]))
+                            price_list20.append(math.floor(loads['data'][mytime]['20'][ind]))
                             # print(loads[mytime]['50'][ind])
                     # print(price_list10)
                     times_list=list(times_list)
@@ -143,18 +154,18 @@ def get_reli_datatype():
                     dicts10['time']=times_list
                     dicts15['time']=times_list
                     dicts20['time']=times_list
-                    dicts1['name']=names_list
-                    dicts3['name']=names_list
-                    dicts5['name']=names_list
-                    dicts10['name']=names_list
-                    dicts15['name']=names_list
-                    dicts20['name']=names_list
-                    dicts1[name]=price_list1
-                    dicts3[name]=price_list3
-                    dicts5[name]=price_list5
-                    dicts10[name]=price_list10
-                    dicts15[name]=price_list15
-                    dicts20[name]=price_list20
+                    dicts1['name']=industrys_list
+                    dicts3['name']=industrys_list
+                    dicts5['name']=industrys_list
+                    dicts10['name']=industrys_list
+                    dicts15['name']=industrys_list
+                    dicts20['name']=industrys_list
+                    dicts1[ind]=price_list1
+                    dicts3[ind]=price_list3
+                    dicts5[ind]=price_list5
+                    dicts10[ind]=price_list10
+                    dicts15[ind]=price_list15
+                    dicts20[ind]=price_list20
             dicts[1]=dicts1
             dicts[3]=dicts3
             dicts[5]=dicts5
@@ -162,40 +173,47 @@ def get_reli_datatype():
             dicts[15]=dicts15
             dicts[20]=dicts20
 
-    with open('p_label_reli.json','w+') as f :
+    with open('../data/rpsdata/p_label_reli.json','w+') as f :
         json.dump(dicts,f)
 
 # 获取json格式的文件
 def get_json_lists():
     # 获取交易日列表，获取需要更新的日期列表
     # 因为我用的申万数据是新的，数据最新的时间是20210101，而且为什么必须使用[50:]，为了使RPS50可以用上
-    get_day_list = pro.trade_cal(start_date='20211102', end_date='20220812')
-    get_day_list = list(get_day_list[get_day_list['is_open'] == 1]['cal_date'])[-110:]
+    # day_list = pro.trade_cal(start_date='20050104', end_date='20211210')
+    # day_list = list(day_list[day_list['is_open'] == 1]['cal_date'])
+    day_list = []
+    daylist = get_trade_days(start_date="2005-01-04",end_date="2021-12-10")
+    for date in daylist:
+        day_list.append(date.strftime('%Y-%m-%d'))
+    get_day_list = day_list[20:]
     length=len(get_day_list)
     # print(get_day_list)
     n=len(get_day_list)
     #获取一段时间的所有的行业数据
-    all_stocks=getdatas()
+    all_stocks=getdatas(length)
+    all_stocks.index = day_list
     print(all_stocks)
-
-    #计算价格
-    stocks_price = all_stocks/all_stocks.shift(-1)-1
-    stocks_price = stocks_price.fillna(0)
-
-    stocks_price.to_csv('price.csv')
-    print(stocks_price)
+    # #计算价格
+    # stocks_price = all_stocks/all_stocks.shift(-1)-1
+    # stocks_price = stocks_price.fillna(0)
+    #
+    # stocks_price.to_csv('price.csv')
+    # print(stocks_price)
     #计算连续一段时间的所有行业RPS值
     dict_rpss={}
-    while n:
-        endday=get_day_list[n-1]
-        print("时间:{}这是第{}个，还剩{}个".format(endday,length-n+1,n))
+    for i in range(n):
+        endday=get_day_list[i]
+        print("时间:{}这是第{}个，还剩{}个".format(endday,i,length-i+1))
         dict_rps=getRPS(endday,all_stocks)
         dict_rpss[endday]=dict_rps
-        n=n-1
     # print(dict_rpss)
-    with open('p_label.json','w+') as f :
-        json.dump(dict_rpss,f)
-
+    dist = {}
+    dist['data'] = dict_rpss
+    dist['date'] = get_day_list
+    dist['code'] = list(all_stocks.columns)
+    with open('../data/rpsdata/p_label.json','w+') as f :
+        json.dump(dist,f)
 
 # 获取json格式的文件
 get_json_lists()

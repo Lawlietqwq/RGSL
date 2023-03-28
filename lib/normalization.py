@@ -20,7 +20,9 @@ class StandardScaler:
         self.std = std
 
     def transform(self, data):
-        return (data - self.mean) / self.std
+        res = (data - self.mean) / self.std
+        res[np.isnan(res)] = 0
+        return res
 
     def inverse_transform(self, data):
         if type(data) == torch.Tensor and type(self.mean) == np.ndarray:
@@ -39,7 +41,9 @@ class MinMax01Scaler:
         self.max = max
 
     def transform(self, data):
-        return (data - self.min) / (self.max - self.min)
+        res = (data - self.min) / (self.max - self.min)
+        res[np.isnan(res)] = 0
+        return res
 
     def inverse_transform(self, data):
         if type(data) == torch.Tensor and type(self.min) == np.ndarray:

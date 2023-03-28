@@ -68,12 +68,14 @@ def CORR_torch(pred, true, mask_value=None):
 
 def MAPE_torch(pred, true, mask_value=None):
     if mask_value != None:
-        mask = torch.gt(true, mask_value)
+        mask = torch.ne(true, mask_value)
         pred = torch.masked_select(pred, mask)
         true = torch.masked_select(true, mask)
         tmp = torch.abs(torch.div((true - pred), true))
         # mask2 = tmp.gt(tmp, 2.0)
         # tmp = torch.masked_select(tmp, mask2)
+    else:
+        tmp = torch.abs(torch.div((true - pred), true))
     return torch.mean(tmp)
 
 

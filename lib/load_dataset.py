@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-def load_st_dataset(dataset):
+def load_st_dataset(dataset, reverse=False):
     #output B, N, D
     if dataset == 'PEMSD4':
         data_path = os.path.join('../data/PeMSD4/pems04.npz')
@@ -21,4 +21,7 @@ def load_st_dataset(dataset):
     if len(data.shape) == 2:
         data = np.expand_dims(data, axis=-1)
     print('Load %s Dataset shaped: ' % dataset, data.shape, data.max(), data.min(), data.mean(), np.median(data))
+    if reverse:
+        # data = np.transpose(data, 0)
+        data = data[::-1,:]
     return data

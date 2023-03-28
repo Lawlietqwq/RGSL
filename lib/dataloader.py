@@ -4,7 +4,7 @@ import torch.utils.data
 from lib.add_window import Add_Window_Horizon
 from lib.load_dataset import load_st_dataset
 from lib.normalization import NScaler, MinMax01Scaler, MinMax11Scaler, StandardScaler, ColumnMinMaxScaler, MMScaler
-
+import pandas as pd
 
 def normalize_dataset(data, normalizer, column_wise=False):
     if normalizer == 'max01':
@@ -12,8 +12,8 @@ def normalize_dataset(data, normalizer, column_wise=False):
             minimum = data.min(axis=0, keepdims=True)
             maximum = data.max(axis=0, keepdims=True)
         else:
-            minimum = data.min()
-            maximum = data.max()
+            minimum = data.min(axis=1, keepdims=True)
+            maximum = data.max(axis=1, keepdims=True)
         scaler = MinMax01Scaler(minimum, maximum)
         data = scaler.transform(data)
         print('Normalize the dataset by MinMax01 Normalization')
@@ -32,8 +32,8 @@ def normalize_dataset(data, normalizer, column_wise=False):
             mean = data.mean(axis=0, keepdims=True)
             std = data.std(axis=0, keepdims=True)
         else:
-            mean = data.mean()
-            std = data.std()
+            mean = data.mean(axis=1, keepdims=True)
+            std = data.std(axis=1, keepdims=True)
         scaler = StandardScaler(mean, std)
         data = scaler.transform(data)
         print('Normalize the dataset by Standard Normalization')
@@ -66,7 +66,7 @@ def normalize_dataset(data, normalizer, column_wise=False):
 #     train_data = data[:-T*(test_days + val_days)]
 #     return train_data, val_data, test_data
 
-def split_data_by_days(data, val_days, test_days):
+def split_data_by_days(data, tra_days, val_days, test_days):
     '''
     :param data: [B, *]
     :param val_days:
@@ -74,11 +74,12 @@ def split_data_by_days(data, val_days, test_days):
     :param interval: interval (15, 30, 60) minutes
     :return:
     '''
+    tra_days = int(tra_days)
     val_days = int(val_days)
     test_days = int(test_days)
-    test_data = data[:test_days]
-    val_data = data[test_days: test_days + val_days]
-    train_data = data[test_days + val_days:]
+    train_data = data[:tra_days]
+    val_data = data[tra_days: tra_days + val_days]
+    test_data = data[tra_days + val_days:]
     return train_data, val_data, test_data
 
 
@@ -100,15 +101,19 @@ def data_loader(X, Y, batch_size, shuffle=True, drop_last=True):
     return dataloader
 
 
-def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False, single=False):
+def get_dataloader(args, normalizer = 'max01', tod=False, dow=False, weather=False, single=False):
     #load raw st dataset
-    data = load_st_dataset(args.dataset)        # B, N, D
+    data = load_st_dataset(args.dataset, False)        # B, N, D
+    IC = True
+    if IC:
+        up_limit = pd.read_csv('../util/up_limit_dict.csv', index_col=0).to_numpy()
+        data = np.concatenate((data, up_limit[:, :, np.newaxis]), axis=2)
     #normalize st data
     data, scaler = normalize_dataset(data, normalizer, args.column_wise)
     # scaler = MMScaler(0, 100)
     #spilit dataset by days or by ratio
     if args.test_ratio > 1:
-        data_train, data_val, data_test = split_data_by_days(data, args.val_ratio, args.test_ratio)
+        data_train, data_val, data_test = split_data_by_days(data, args.tra_ratio, args.val_ratio, args.test_ratio)
     else:
         data_train, data_val, data_test = split_data_by_ratio(data, args.val_ratio, args.test_ratio)
     #add time window
@@ -119,12 +124,12 @@ def get_dataloader(args, normalizer = 'std', tod=False, dow=False, weather=False
     print('Val: ', x_val.shape, y_val.shape)
     print('Test: ', x_test.shape, y_test.shape)
     ##############get dataloader######################
-    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=True, drop_last=True)
+    train_dataloader = data_loader(x_tra, y_tra, args.batch_size, shuffle=False, drop_last=True)
     if len(x_val) == 0:
         val_dataloader = None
     else:
         val_dataloader = data_loader(x_val, y_val, args.batch_size, shuffle=False, drop_last=True)
-    test_dataloader = data_loader(x_test, y_test, args.batch_size, shuffle=False, drop_last=False)
+    test_dataloader = data_loader(x_test, y_test, args.batch_size, shuffle=False, drop_last=True)
     return train_dataloader, val_dataloader, test_dataloader, scaler
 
 

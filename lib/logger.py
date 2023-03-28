@@ -22,13 +22,16 @@ def get_logger(root, name=None, debug=True):
         # create a handler for write log to file
         logfile = os.path.join(root, 'run.log')
         print('Creat Log File in: ', logfile)
-        file_handler = logging.FileHandler(logfile, mode='w')
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
+        if not logger.handlers:
+            file_handler = logging.FileHandler(logfile, mode='w')
+            file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
     # add Handler to logger
-    logger.addHandler(console_handler)
-    if not debug:
+    # if not logger.handlers:
+    #     pass
+    if not debug and not logger.handlers:
+        logger.addHandler(console_handler)
         logger.addHandler(file_handler)
     return logger
 
