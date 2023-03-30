@@ -5,7 +5,7 @@ import json
 import numpy as np
 import operator
 import os
-# import pandas as pd
+import pandas as pd
 
 class SectorPreprocessor:
     def __init__(self, data_path, market_name):
@@ -67,6 +67,10 @@ class SectorPreprocessor:
         np.save('RPS_industry_relation',
                 ticker_relation_embedding)
         return ticker_relation_embedding
+
+    def generate_similar_relation(self):
+        path = '../util/pct_change.csv'
+        df = pd.read_csv(path)
 
 
 if __name__ == '__main__':

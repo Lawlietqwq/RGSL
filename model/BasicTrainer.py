@@ -20,7 +20,7 @@ class Trainer(object):
                  scaler, args, lr_scheduler=None):
         super(Trainer, self).__init__()
         self.model = model
-        self.ema_model = ModelEmaV2(model, decay=args.model_ema_decay)
+        # self.ema_model = ModelEmaV2(model, decay=args.model_ema_decay)
         self.adj_mx = adj_mx
         self.L_tilde = L_tilde
         self.loss = loss
@@ -35,7 +35,7 @@ class Trainer(object):
         if val_loader != None:
             self.val_per_epoch = len(val_loader)
         self.best_path = os.path.join(self.args.log_dir, 'best_model.pth')
-        self.best_path_ema = os.path.join(self.args.log_dir, 'best_ema_model.pth')
+        # self.best_path_ema = os.path.join(self.args.log_dir, 'best_ema_model.pth')
         self.loss_figure_path = os.path.join(self.args.log_dir, 'loss.png')
         #log
         if os.path.isdir(args.log_dir) == False and not args.debug:
@@ -120,7 +120,7 @@ class Trainer(object):
             if self.args.grad_norm:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
             self.optimizer.step()
-            self.ema_model.update(self.model)
+            # self.ema_model.update(self.model)
             total_loss += all_loss.item()
 
             #log information
@@ -154,8 +154,8 @@ class Trainer(object):
             else:
                 val_dataloader = self.val_loader
             val_epoch_loss = self.val_epoch(self.model, epoch, val_dataloader)
-            self.logger.info("##################EMA####################")
-            val_ema_epoch_loss = self.val_epoch(self.ema_model.module, epoch, val_dataloader)
+            # self.logger.info("##################EMA####################")
+            # val_ema_epoch_loss = self.val_epoch(self.ema_model.module, epoch, val_dataloader)
 
             #print('LR:', self.optimizer.param_groups[0]['lr'])
             train_loss_list.append(train_epoch_loss)
@@ -189,15 +189,15 @@ class Trainer(object):
         #save the best model to file
         if not self.args.debug:
             torch.save(best_model, self.best_path)
-            torch.save(self.ema_model.state_dict(), self.best_path_ema)
+            # torch.save(self.ema_model.state_dict(), self.best_path_ema)
             self.logger.info("Saving current best model to " + self.best_path)
 
         #test
         self.model.load_state_dict(best_model)
         #self.val_epoch(self.args.epochs, self.test_loader)
         performence = self.test(self.model, self.args, self.test_loader, self.scaler, self.logger)
-        self.logger.info("##################EMA####################")
-        self.test(self.ema_model.module, self.args, self.test_loader, self.scaler, self.logger)
+        # self.logger.info("##################EMA####################")
+        # self.test(self.ema_model.module, self.args, self.test_loader, self.scaler, self.logger)
         return performence
 
     def save_checkpoint(self):

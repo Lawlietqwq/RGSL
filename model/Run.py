@@ -166,8 +166,8 @@ class Runner(object):
         adj_mx = torch.from_numpy(adj_mx).type(torch.FloatTensor).to(args.device)
         L_tilde = torch.from_numpy(L_tilde).type(torch.FloatTensor).to(args.device)
         # model = Network(args, cheb_polynomials, L_tilde)
-        # model = LSTMNetwork(args)
-        model = TestModel(args)
+        model = LSTMNetwork(args)
+        # model = TestModel(args)
         # model = RNNNetwork(args)
         # model = GRUNetwork(args)
         # model = RNNNetwork(args.input_dim, args.rnn_units, args.num_layers, args.output_dim,args.batch_size)
@@ -251,7 +251,7 @@ if args.mode == 'train':
     else:
         # 平均
         df = pd.DataFrame(columns=fields)
-        for i in range(1):
+        for i in range(10):
             runner = Runner()
             result = runner.trainer.train()
             row['epoch'] = args.epochs
