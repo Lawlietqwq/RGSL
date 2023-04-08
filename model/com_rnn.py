@@ -1,27 +1,47 @@
 import torch
-import torch.nn as nn
-from util.evaluator import evaluate
+from torch.autograd import Variable
+from torch import nn
+
 
 class RNN(nn.Module):
-    # def __init__(self, input_size, hidden_size, num_layers, output_size, batch_size):
     def __init__(self, args):
-        super().__init__()
+        super(RNN, self).__init__()
+
+        # Defining some parameters
         self.input_size = args.input_dim
-        self.hidden_size = args.rnn_units
+        self.hidden_dim = args.rnn_units
         self.num_layers = args.num_layers
         self.output_size = args.output_dim
-        self.num_directions = 1
+        self.num_nodes = args.num_nodes
         self.batch_size = args.batch_size
-        self.encorder = nn.RNN(self.input_size, self.hidden_size, self.num_layers)
-        self.linear = nn.Linear(self.hidden_size, self.output_size)
         self.args = args
+        # Defining the layers
+        # RNN Layer
+        self.rnn = nn.RNN(self.num_nodes*self.input_size, self.hidden_dim, self.num_layers, batch_first=True)
+        # Fully connected layer
+        self.fc = nn.Linear(self.hidden_dim, self.num_nodes*self.output_size)
 
-    def forward(self, input_seq):
-        batch_size, seq_len = input_seq.shape[0], input_seq.shape[1]
-        h_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(self.args.device)
-        c_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(self.args.device)
-        # output(batch_size, seq_len, num_directions * hidden_size)
-        output, _ = self.encorder(input_seq, (h_0, c_0)) # output(5, 30, 64)
-        pred = self.linear(output)  # (5, 30, 1)
-        pred = pred[:, -1, :]  # (5, 1)
-        return pred
+    def forward(self, x):
+        batch_size = x.shape[0]
+        seq_len = x.shape[1]
+
+        x = x.reshape(batch_size, seq_len, self.num_nodes*self.input_size)
+
+        # Initializing hidden state for first input using method defined below
+        hidden = self.init_hidden(batch_size)
+
+        # Passing in the input and hidden state into the model and obtaining outputs
+        out, hidden = self.rnn(x, hidden)
+
+        # Reshaping the outputs such that it can be fit into the fully connected layer
+        # out = out.contiguous().view(-1, self.hidden_dim)
+        out = self.fc(out)
+        out = out[:, -1, :]
+        out = out.unsqueeze(-1).unsqueeze(1)
+        return out
+
+    def init_hidden(self, batch_size):
+        # This method generates the first hidden state of zeros which we'll use in the forward pass
+        # We'll send the tensor holding the hidden state to the device we specified earlier as well
+        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_dim).to(self.args.device)
+        return hidden

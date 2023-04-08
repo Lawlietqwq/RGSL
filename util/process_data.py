@@ -210,8 +210,10 @@ def pe(code_lists ,date_list):
     pe_fct = pd.DataFrame(index=date_list)
     pb_fct = pd.DataFrame(index=date_list)
     idx = 0
+    date = date_list[-1].replace('-','')
     for industry_code in code_lists:
-        df1 = pro.sw_daily(ts_code=industry_code, end_date=date_list[0])
+
+        df1 = pro.sw_daily(ts_code=industry_code+'.SI', end_date=date)
         pe_fct[industry_code] = list(df1['pe'])
         pb_fct[industry_code] = list(df1['pb'])
         if idx==100:
@@ -252,6 +254,10 @@ def industry_index(code_lists, date_list):
 #价格
 def industry_price(code_lists ,date_list):
     df_index = pd.DataFrame(index=date_list)
+    df_vol = pd.DataFrame(index=date_list)
+    df_open = pd.DataFrame(index=date_list)
+    df_high = pd.DataFrame(index=date_list)
+    df_low = pd.DataFrame(index=date_list)
     for industry_code in code_lists:
         df1 = finance.run_query(query(finance.SW1_DAILY_PRICE).filter(finance.SW1_DAILY_PRICE.code == industry_code,
                                                                       finance.SW1_DAILY_PRICE.date >= date_list[0],
@@ -263,11 +269,19 @@ def industry_price(code_lists ,date_list):
         # tmp = pro.sw_daily(ts_code=industry_code, start_date=date_list[-1], end_date=date_list[0])
         # df_index[industry_code] = list(tmp['close'])
         df_index[industry_code] = list(tmp['close'])
+        df_vol[industry_code] = list(tmp['volume'])
+        df_open[industry_code] = list(tmp['open'])
+        df_high[industry_code] = list(tmp['high'])
+        df_low[industry_code] = list(tmp['low'])
     df_index.to_csv('close_price.csv')
+    df_vol.to_csv('volume.csv')
+    df_open.to_csv('open_price.csv')
+    df_high.to_csv('high_price.csv')
+    df_low.to_csv('low_price.csv')
     print("close_price完成")
 
 print('______________')
-# industry_price(code_lists,date_list)
+industry_price(code_lists,date_list)
 # industry_index(code_lists, date_list)
 # pe(code_lists, date_list)
 # up_limit2(code_lists,date_list)
@@ -291,6 +305,12 @@ rps15 = df['rps15'].to_numpy().reshape(num, seq).T
 rps20 = df['rps20'].to_numpy().reshape(num, seq).T
 pct_change = pd.read_csv('../util/pct_change.csv', index_col=0).to_numpy()
 close_price = pd.read_csv('../util/close_price.csv', index_col=0).to_numpy()
+open_price = pd.read_csv('../util/open_price.csv', index_col=0).to_numpy()
+turnover_fct = pd.read_csv('../util/turn_over.csv', index_col=0).to_numpy()
+low_price = pd.read_csv('../util/low_price.csv', index_col=0).to_numpy()
+volume = pd.read_csv('../util/volume.csv', index_col=0).to_numpy()
+high_price = pd.read_csv('../util/high_price.csv', index_col=0).to_numpy()
+up_limit_fct = pd.read_csv('../util/up_limit_dict.csv', index_col=0).to_numpy()
 arr = np.zeros([seq, num, 8])
 arr[...,0] = rps1
 arr[...,1] = rps3
@@ -300,6 +320,13 @@ arr[...,4] = rps15
 arr[...,5] = rps20
 arr[...,6] = pct_change
 arr[...,7] = close_price
+arr[...,8] = up_limit_fct
+# all fct
+arr[...,9] = open_price
+arr[...,10] = low_price
+arr[...,11] = high_price
+arr[...,12] = turnover_fct
+arr[...,13] = volume
 # arr = arr/100
 print(arr)
 np.save('../data/rpsdata/rps_data.npy', arr)

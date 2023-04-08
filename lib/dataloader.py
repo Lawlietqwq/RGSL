@@ -104,10 +104,6 @@ def data_loader(X, Y, batch_size, shuffle=True, drop_last=True):
 def get_dataloader(args, normalizer = 'max01', tod=False, dow=False, weather=False, single=False):
     #load raw st dataset
     data = load_st_dataset(args.dataset, False)        # B, N, D
-    IC = True
-    if IC:
-        up_limit = pd.read_csv('../util/up_limit_dict.csv', index_col=0).to_numpy()
-        data = np.concatenate((data, up_limit[:, :, np.newaxis]), axis=2)
     #normalize st data
     data, scaler = normalize_dataset(data, normalizer, args.column_wise)
     # scaler = MMScaler(0, 100)

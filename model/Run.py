@@ -36,8 +36,8 @@ DEBUG = 'False'
 DATASET = 'rpsdata'      #PEMSD4 or PEMSD8
 # DATASET = 'PEMSD8'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
-# MODEL = 'RGSL'
-MODEL = 'AGCRN'
+MODEL = 'RGSL'
+# MODEL = 'GRU'
 
 #get configuration
 # config_file = './{}_{}.conf'.format(DATASET, MODEL)
@@ -165,11 +165,16 @@ class Runner(object):
         #init model
         adj_mx = torch.from_numpy(adj_mx).type(torch.FloatTensor).to(args.device)
         L_tilde = torch.from_numpy(L_tilde).type(torch.FloatTensor).to(args.device)
-        # model = Network(args, cheb_polynomials, L_tilde)
-        model = LSTMNetwork(args)
+        if args.model == 'RGSL':
+            model = Network(args, cheb_polynomials, L_tilde)
+        elif args.model == 'LSTM':
+            model = LSTMNetwork(args)
+        elif args.model == 'GRU':
+            model = GRUNetwork(args)
+        elif args.model == 'RNN':
+            model = RNNNetwork(args)
         # model = TestModel(args)
         # model = RNNNetwork(args)
-        # model = GRUNetwork(args)
         # model = RNNNetwork(args.input_dim, args.rnn_units, args.num_layers, args.output_dim,args.batch_size)
         # model = GRUNetwork(args.input_dim, args.rnn_units, args.num_layers, args.output_dim,args.batch_size)
 
@@ -225,9 +230,9 @@ result = pd.DataFrame()
 
 if args.mode == 'train':
     new = True
-    seed_fields = ['seed', 'epoch', 'lr', 'MAE', 'MRR', 'IRR1', 'IRR5', 'IRR10']
-    fields = ['epoch', 'lr', 'MAE', 'MRR', 'IRR1', 'IRR5', 'IRR10']
-    avg_fields = ['epoch', 'lr', 'avg_MAE', 'var_MAE', 'avg_MRR', 'var_MRR', 'avg_IRR1', 'var_IRR1', 'avg_IRR5', 'var_IRR5', 'avg_IRR10', 'var_IRR10']
+    seed_fields = ['model', 'seed', 'epoch', 'lr', 'MAE', 'MRR', 'IRR1', 'IRR5', 'IRR10']
+    fields = ['model', 'epoch', 'lr', 'MAE', 'MRR', 'IRR1', 'IRR5', 'IRR10']
+    avg_fields = ['model', 'epoch', 'lr', 'avg_MAE', 'var_MAE', 'avg_MRR', 'var_MRR', 'avg_IRR1', 'var_IRR1', 'avg_IRR5', 'var_IRR5', 'avg_IRR10', 'var_IRR10']
     seed_start = False
     row = {}
     if seed_start:
@@ -236,6 +241,7 @@ if args.mode == 'train':
             init_seed(seed)
             runner = Runner()
             result = runner.trainer.train()
+            row['model'] = args.model
             row['seed'] = seed
             row['epoch'] = args.epochs
             row['lr'] = args.lr_init
@@ -254,6 +260,7 @@ if args.mode == 'train':
         for i in range(10):
             runner = Runner()
             result = runner.trainer.train()
+            row['model'] = args.model
             row['epoch'] = args.epochs
             row['lr'] = args.lr_init
             row['MAE'] = result['MAE']
@@ -264,6 +271,7 @@ if args.mode == 'train':
             df = df.append(row,ignore_index=True)
         df.to_csv('../data/performence/avg_run.csv', mode="a")
         row = {}
+        row['model'] = args.model
         row['epoch'] = args.epochs
         row['lr'] = args.lr_init
         row['avg_MAE'] = df['MAE'].mean()
