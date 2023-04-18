@@ -26,7 +26,7 @@ def heat_graph():
                      fmt="d",
                      vmin=0,  # 刻度阈值
                      vmax=100,
-                     linewidths=.5,
+                     linewidths=0.5,
                      cmap="RdPu",  # 刻度颜色
                      annot_kws={"size": 10},
                      xticklabels=5,
@@ -36,7 +36,8 @@ def heat_graph():
     plt.rcParams['axes.unicode_minus'] = False
     # plt.ylabel(fontsize=15,)
     # plt.xlabel(fontsize=15)
-    plt.title("RPS time series of stock sectors", fontsize=20)
+    # plt.title("RPS time series of stock sectors", fontsize=20)
+    plt.savefig("heat.pdf", dpi=300, format="pdf")
     plt.show()
 
 def bar_graph():
@@ -65,6 +66,8 @@ def bar_graph():
     # 显示图例
     plt.legend()
     # 显示柱状图
+    plt.savefig("bar.pdf", dpi=300, format="pdf")
     plt.show()
 
-bar_graph()
+heat_graph()
+# bar_graph()

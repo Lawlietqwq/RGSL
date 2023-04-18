@@ -281,7 +281,7 @@ def industry_price(code_lists ,date_list):
     print("close_price完成")
 
 print('______________')
-industry_price(code_lists,date_list)
+# industry_price(code_lists,date_list)
 # industry_index(code_lists, date_list)
 # pe(code_lists, date_list)
 # up_limit2(code_lists,date_list)
@@ -311,7 +311,7 @@ low_price = pd.read_csv('../util/low_price.csv', index_col=0).to_numpy()
 volume = pd.read_csv('../util/volume.csv', index_col=0).to_numpy()
 high_price = pd.read_csv('../util/high_price.csv', index_col=0).to_numpy()
 up_limit_fct = pd.read_csv('../util/up_limit_dict.csv', index_col=0).to_numpy()
-arr = np.zeros([seq, num, 8])
+arr = np.zeros([seq, num, 10])
 arr[...,0] = rps1
 arr[...,1] = rps3
 arr[...,2] = rps5
@@ -319,14 +319,24 @@ arr[...,3] = rps10
 arr[...,4] = rps15
 arr[...,5] = rps20
 arr[...,6] = pct_change
-arr[...,7] = close_price
-arr[...,8] = up_limit_fct
-# all fct
-arr[...,9] = open_price
-arr[...,10] = low_price
-arr[...,11] = high_price
-arr[...,12] = turnover_fct
-arr[...,13] = volume
+arr[...,7] = up_limit_fct
+arr[...,8] = turnover_fct
+arr[...,9] = close_price
+# # # # all fct
+# arr[...,10] = volume
+# arr[...,11] = low_price
+# arr[...,12] = high_price
+# arr[...,13] = open_price
+# arr[...,0] = pct_change
+# arr[...,1] = close_price
+# arr[...,2] = up_limit_fct
+# # all fct
+# arr[...,3] = turnover_fct
+# arr[...,4] = low_price
+# arr[...,5] = high_price
+# arr[...,6] = open_price
+# arr[...,7] = volume
+# arr[...,8] = rps1
 # arr = arr/100
 print(arr)
 np.save('../data/rpsdata/rps_data.npy', arr)

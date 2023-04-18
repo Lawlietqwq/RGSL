@@ -6,7 +6,14 @@
       <paths name="user@121.89.234.19:12500 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/user/wq/RGSL" local="$PROJECT_DIR$" />
+            <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="user@121.89.234.19:12500 password (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

@@ -48,7 +48,7 @@ config = configparser.ConfigParser()
 config.read(config_file)
 print(config.sections())
 
-from lib.metrics import MAE_torch, MSE_torch
+from lib.metrics import MAE_torch, MSE_torch, MSE_sum
 def masked_mae_loss(scaler, mask_value):
     def loss(preds, labels):
         if scaler:
@@ -268,7 +268,9 @@ if args.mode == 'train':
             row['IRR1'] = result['IRR1']
             row['IRR5'] = result['IRR5']
             row['IRR10'] = result['IRR10']
-            df = df.append(row,ignore_index=True)
+            # df = df.append(row,ignore_index=True)
+            df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+
         df.to_csv('../data/performence/avg_run.csv', mode="a")
         row = {}
         row['model'] = args.model

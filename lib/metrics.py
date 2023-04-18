@@ -24,6 +24,13 @@ def MSE_torch(pred, true, mask_value=None):
         true = torch.masked_select(true, mask)
     return torch.mean((pred - true) ** 2)
 
+def MSE_sum(pred, true, mask_value=None):
+    if mask_value != None:
+        mask = torch.gt(true, mask_value)
+        pred = torch.masked_select(pred, mask)
+        true = torch.masked_select(true, mask)
+    return torch.sum((pred - true) ** 2)
+
 
 def RMSE_torch(pred, true, mask_value=None):
     if mask_value != None:

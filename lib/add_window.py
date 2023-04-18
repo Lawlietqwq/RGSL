@@ -18,12 +18,13 @@ def Add_Window_Horizon(data, window=2, horizon=1, single=True):
     if single:
         while index < end_index:
             X.append(data[index:index+window, ...])
+            # X.append(data[index:index+window, ...,:8])
             # tmp_y = data[index+window:index+window+horizon, :, :1]
             # tmp_y = np.array(tmp_y).flatten()
             # tmp_y = tmp_y.argsort()
 
-            # Y.append(data[index+window:index+window+horizon, :, -3:-2])
             Y.append(data[index+window:index+window+horizon, :, :1])
+            # Y.append(data[index+window:index+window+horizon, :, 8:])
             index = index + 1
     else:
         while index < end_index:
