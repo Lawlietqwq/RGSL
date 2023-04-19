@@ -1,52 +1,137 @@
-
-# 获取行业RPS数值
-#先引入后面可能用到的library
-# from pexpect import ExceptionPexpect
-import tushare as ts
-import pandas as pd
-# import matplotlib.pyplot as plt
-import time,datetime
-import math
-# from tools import get_date_bef,get_day_list
-# %matplotlib inline
+from util.section_industry import SectorPreprocessor
 import json
-#使用之前先输入token，可以从个人主页上复制出来，
-#每次调用数据需要先运行该命令
+from collections import deque
+# from os import pread
+from tkinter.font import names
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import numpy as np
+import tushare as ts
+import os
+import time
 from jqdatasdk import *
-auth('18974988801', 'Bigdata12345678')
+import csv
+# auth('18974988801', 'Bigdata12345678')
 
-# industry2 = get_industries(name='sw_l2', date="2020-05-07")
-industry = get_industries(name='sw_l1', date='2020-07-07')
-code_lists = list(industry.index)
-
-ts.set_token('ff64b8b56c9ae9eac1389d7827b79dd578a060338fbaa7794fd9c6d4')
+TUSHARE_TOKEN = 'ff64b8b56c9ae9eac1389d7827b79dd578a060338fbaa7794fd9c6d4'
+ts.set_token(TUSHARE_TOKEN)
 pro = ts.pro_api()
-"""
-endtime:当前时间
-get_date_bef(now,n):获取当前时间n年前的时间
-"""
-# 当前时间
-now_time = datetime.datetime.utcnow()+datetime.timedelta(hours=8)
-print(now_time)
-# 范围时间
-start_time = datetime.datetime.strptime(str(now_time.date()) + '16:00', '%Y-%m-%d%H:%M')
-# 如果时间小于下午四点，那么数据还没更新，所以使用昨天的数据
-if now_time<start_time:
-    day_target = now_time+datetime.timedelta(days=-1)
-else:
-    day_target = now_time
-endtime=day_target.strftime("%Y%m%d")
-# endtime = time.strftime("%Y%m%d", time.localtime())
-end_time = str(endtime)
-# 获取一年前的时间
-# one_year_time = str(get_date_bef(end_time, 1))
+scaler = StandardScaler()
 
-#获取行业代码与名称
-# df = pro.index_classify(level='L2', src='SW2021',fields='index_code,industry_name')
-# df.index=df['index_code']
+# industry_path = '../data/nasdaq/industry_relation_Nasdaq.json'
+# code_list_path = '../data/nasdaq/code_list.csv'
+# stock_path = '../data/nasdaq/stock_list.json'
+# code_list = []
+# stock_relation = {}
+# with open(code_list_path, 'r', encoding='utf-8') as f:
+#     code_list = json.loads(f.read())
+#     code_list = list(code_list)
+#     print(code_list)
+#
+# with open(stock_path, 'r', encoding='utf-8') as f:
+#     stock_relation = json.loads(f.read())
+date_list = pro.us_tradecal(start_date='20100301', end_date='20230301')
+date_list = list(date_list[date_list['is_open'] == 1]['cal_date'])
+date_list = list(reversed(date_list))
+print('{}天的股票'.format(len(date_list)))
+
+def getsectors(path='../data/sectors/'):
+    stock_relation = {}
+    start_date = int(date_list[0])
+    end_date = int(date_list[-1])
+    stock_num = 0
+    all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    all_stock_list = all_stock_list[(all_stock_list['list_date'] < start_date)]
+    all_stock_list = all_stock_list[
+        (np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date'] > end_date)]
+    all_stock_list = list(all_stock_list['ts_code'])
+    for i in range(147):
+        p = path + 'sector{}.csv'.format(i+1)
+        df = pd.read_csv(p)
+        stock_list = list(df['Symbol'])
+        for j in range(len(stock_list)-1,-1,-1):
+            stock = stock_list[j]
+            if stock not in all_stock_list:
+                stock_list.remove(stock)
+        if len(stock_list) == 0:
+            print(i+1001)
+        else:
+            stock_relation[str(i+1001)] = stock_list
+        stock_num += len(stock_list)
+    print("总共{}个股票".format(stock_num))
+    with open('../data/nasdaq/stock_list.json', 'w+') as f:
+        json.dump(stock_relation, f)
+    with open('../data/nasdaq/code_list.json', 'w+') as f:
+        json.dump(list(stock_relation.keys()), f)
+getsectors()
+
+# 所有纳斯达克股票
+def all_stock_to_csv():
+    all_stock_list = pd.DataFrame()
+    for i in range(10):
+        df = pro.us_basic(offset=i*6000)
+        if len(df) != 0:
+            all_stock_list = pd.concat([all_stock_list, df])
+        else: break
+    all_stock_list.index = [j for j in range(len(all_stock_list))]
+    all_stock_list.to_csv('../data/rpsdata/all_nasdaq_stock.csv')
+
+#筛选需要的在售股票
+def drop_delist(stock_relation, code_list, date_list):
+    start_date = int(date_list[0])
+    end_date = int(date_list[-1])
+    stock_num = 0
+    all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    all_stock_list = all_stock_list[(all_stock_list['list_date']<start_date)]
+    all_stock_list = all_stock_list[(np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date']>end_date)]
+    all_stock_list = list(all_stock_list['ts_code'])
+    for code in code_list:
+        stock_list = stock_relation.get(code)
+        for i in range(len(stock_list)-1,-1,-1):
+            stock = stock_list[i]
+            if stock not in all_stock_list:
+                stock_list.remove(stock)
+        if len(stock_list) == 0:
+            print(code)
+        else:
+            stock_relation[code] = stock_list
+        stock_num += len(stock_list)
+    print("总共{}个股票".format(stock_num))
+    with open('../data/rpsdata/new_nasdaq_stock.json', 'w+') as f:
+        json.dump(stock_relation, f)
+
+# all_stock_to_csv()
+# drop_delist(stock_relation, code_list, date_list)
+
+def drop_delist(stock_relation, code_list, date_list):
+    start_date = int(date_list[0])
+    end_date = int(date_list[-1])
+    stock_num = 0
+    all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    all_stock_list = all_stock_list[(all_stock_list['list_date']<start_date)]
+    all_stock_list = all_stock_list[(np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date']>end_date)]
+    all_stock_list = list(all_stock_list['ts_code'])
+    for code in code_list:
+        stock_list = stock_relation.get(code)
+        for i in range(len(stock_list)-1,-1,-1):
+            stock = stock_list[i]
+            if stock not in all_stock_list:
+                stock_list.remove(stock)
+        if len(stock_list) == 0:
+            print(code)
+        else:
+            stock_relation[code] = stock_list
+        stock_num += len(stock_list)
+    print("总共{}个股票".format(stock_num))
+    with open('../data/rpsdata/new_nasdaq_stock.json', 'w+') as f:
+        json.dump(stock_relation, f)
 
 
-#获取一段时间的所有的行业数据
+
+
+
+
+
 def getdatas(date_length):
     length=len(code_lists)
     datas={}
@@ -85,6 +170,7 @@ def getdatas(date_length):
     all_stocks=pd.DataFrame(data=datas)
     all_stocks.index=times
     return all_stocks
+
 
 #计算RPS
 def getRPS(end_time,all_stocks):
@@ -181,7 +267,6 @@ def get_json_lists():
     # 获取交易日列表，获取需要更新的日期列表
     # 因为我用的申万数据是新的，数据最新的时间是20210101，而且为什么必须使用[50:]，为了使RPS50可以用上
     # day_list = pro.trade_cal(start_date='20050104', end_date='20211210')
-
     # day_list = list(day_list[day_list['is_open'] == 1]['cal_date'])
     day_list = []
     daylist = get_trade_days(start_date="2005-01-04",end_date="2021-12-10")
@@ -215,9 +300,3 @@ def get_json_lists():
     dist['code'] = list(all_stocks.columns)
     with open('../data/rpsdata/p_label.json','w+') as f :
         json.dump(dist,f)
-
-# 获取json格式的文件
-get_json_lists()
-# 将数据转化为热力图数据
-get_reli_datatype()
-print('行业RPS数据更新成功')
