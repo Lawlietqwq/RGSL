@@ -14,11 +14,16 @@ class SectorPreprocessor:
         self.market_name = market_name
 
     def generate_sector_relation(self, industry_ticker_file,
-                                 selected_tickers_fname):
-        selected_tickers = np.genfromtxt(
-            os.path.join(self.data_path, '..', selected_tickers_fname),
-            dtype=str, delimiter='\t', skip_header=False
-        )
+                                 selected_tickers_fname, name):
+        if name == 'nasdaq':
+            with open(selected_tickers_fname, 'r', encoding='utf-8') as f:
+                selected_tickers = json.loads(f.read())
+                selected_tickers = list(selected_tickers)
+        else:
+            selected_tickers = np.genfromtxt(
+                selected_tickers_fname,
+                dtype=str, delimiter='\t', skip_header=False
+            )
         print('#tickers selected:', len(selected_tickers))
         ticker_index = {}
         for index, ticker in enumerate(selected_tickers):

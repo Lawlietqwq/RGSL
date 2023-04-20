@@ -36,6 +36,7 @@ with open(stock_path, 'r', encoding='utf-8') as f:
 date_list = pro.us_tradecal(start_date='20160301', end_date='20230301')
 date_list = list(date_list[date_list['is_open'] == 1]['cal_date'])
 date_list = list(reversed(date_list))
+date_list.remove('20220620')
 print('{}天的股票'.format(len(date_list)))
 
 mapping = {}
@@ -144,7 +145,7 @@ def drop_delist(stock_relation, code_list, date_list):
 def cal_sector():
     start_date = date_list[0]
     end_date = date_list[-1]
-    new_date_list = date_list[1:]
+    new_date_list = date_list
     turnover_fct = pd.DataFrame(index=new_date_list)
     df_close = pd.DataFrame(index=new_date_list)
     df_open = pd.DataFrame(index=new_date_list)
@@ -180,7 +181,6 @@ def cal_sector():
             tmp['开盘'] = avg_mkt * tmp['开盘']
             tmp['最高'] = avg_mkt * tmp['最高']
             tmp['最低'] = avg_mkt * tmp['最低']
-            tmp['成交量'] = avg_mkt * tmp['成交量']
             turn_over = tmp['换手率'].fillna(0).sum()
             close = tmp['收盘'].fillna(0).sum()
             open = tmp['开盘'].fillna(0).sum()
@@ -229,9 +229,9 @@ def cal_sector():
 # cal_sector()
 
 def up_limit():
-    start_date = date_list[1]
+    start_date = date_list[21]
     end_date = date_list[-1]
-    new_date_list = date_list[1:]
+    new_date_list = date_list[21:]
     fct = pd.DataFrame(index=new_date_list)
     up_limit_dict = []
     for industry_code in code_list:
@@ -241,12 +241,21 @@ def up_limit():
             code = mapping.get(stock_code)
             industry_df = ak.stock_us_hist(symbol=code, period='daily', start_date=start_date,
                                                           end_date=end_date, adjust="")
-            industry_df.index = new_date_list
-            up_limit_list += (industry_df['涨跌幅'] >= 0.1) + 0
+            industry_df['日期'] = industry_df['日期'].replace(to_replace={'-':''},regex=True)
+            # tmp = industry_df['日期']
+            # for i in range(len(new_date_list)):
+            #     if tmp.iloc[i].replace('-','')!=new_date_list[i]:
+            #         print(tmp.iloc[i])
+            #         print(new_date_list[i])
+            #         print(i)
+            industry_df =  industry_df.set_index('日期')
+            print(stock_code)
+            up_limit_list = up_limit_list.add((industry_df['涨跌幅'] >= 0.1) + 0, fill_value = 0)
         fct[industry_code] = up_limit_list
 
     print(up_limit_dict)
     fct = fct.fillna(0)
     fct.to_csv('../data/nasdaq/up_limit_dict.csv')
 
-up_limit()
+# up_limit()
+

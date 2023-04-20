@@ -38,10 +38,17 @@ DATASET = 'rpsdata'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
 MODEL = 'RGSL'
 # MODEL = 'GRU'
-
+NAME = 'nasdaq'
 #get configuration
 # config_file = './{}_{}.conf'.format(DATASET, MODEL)
-config_file = 'test.conf'
+if NAME == 'nasdaq':
+    config_file = 'test2.conf'
+    code_path = '../data/nasdaq/code_list.json'
+    relation_path = '../data/nasdaq/industry_relation_Nasdaq.json'
+else:
+    config_file = 'test.conf'
+    code_path = '../data/rpsdata/code_list.csv'
+    relation_path = '../data/rpsdata/industry_relation.json'
 print(config_file)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
@@ -154,8 +161,9 @@ class Runner(object):
         processor = SectorPreprocessor("", "")
 
         adj_mx = processor.generate_sector_relation(
-                os.path.join('../data/rpsdata/industry_relation.json'),
-                'data/rpsdata/code_list.csv'
+                os.path.join(relation_path),
+                code_path,
+                NAME
             )
         adj_mx = adj_mx.astype(np.float32)
 
