@@ -16,6 +16,9 @@ def load_st_dataset(dataset, reverse=False):
         # df.index = df['index_code']
         # df = pro.index_member(index_code='850531.SI')["out_date"==None].con_code
         # pro.sw_daily()
+    elif dataset == 'nasdaq':
+        data_path = os.path.join('../data/nasdaq/rps_data.npy')
+        data = np.load(data_path)
     else:
         raise ValueError
     if len(data.shape) == 2:

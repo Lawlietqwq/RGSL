@@ -39,16 +39,19 @@ DEVICE = 'cuda:0'
 MODEL = 'RGSL'
 # MODEL = 'GRU'
 NAME = 'nasdaq'
+# NAME = 'rpsdata'
 #get configuration
 # config_file = './{}_{}.conf'.format(DATASET, MODEL)
 if NAME == 'nasdaq':
     config_file = 'test2.conf'
     code_path = '../data/nasdaq/code_list.json'
     relation_path = '../data/nasdaq/industry_relation_Nasdaq.json'
+    DATASET = 'nasdaq'
 else:
     config_file = 'test.conf'
     code_path = '../data/rpsdata/code_list.csv'
     relation_path = '../data/rpsdata/industry_relation.json'
+    DATASET = 'rpsdata'
 print(config_file)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
@@ -70,9 +73,10 @@ def rank_mae_loss(args):
         mse = MSE_torch(pred=preds, true=labels)
         # return_ratio = tf.div(tf.subtract(prediction, base_price), base_price)
         batch_size = len(preds)
+        node_num = preds.shape[2]
         preds_tmp = preds.squeeze(1)
         labels_tmp = labels.squeeze(1)
-        all_one = torch.ones(batch_size,28,1).to(args.device)
+        all_one = torch.ones(batch_size,node_num,1).to(args.device)
         pre = torch.sub(
             torch.matmul(preds_tmp, all_one.transpose(1, 2)),
             torch.matmul(all_one, preds_tmp.transpose(1, 2))

@@ -147,8 +147,8 @@ class RGSL(nn.Module):
         if is_eval:
             adj = gumbel_softmax(learned_graph, tau=1, hard=True)
         else:
-            # adj = gumbel_softmax(learned_graph, tau=1, hard=True)
-            adj = learned_graph
+            adj = gumbel_softmax(learned_graph, tau=1, hard=True)
+            # adj = learned_graph
         adj = adj[:, :, 0].clone().reshape(node_num, -1)
         # mask = torch.eye(self.num_nodes, self.num_nodes).to(device).byte()
         mask = torch.eye(node_num, node_num).bool().cuda()
