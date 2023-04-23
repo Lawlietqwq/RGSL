@@ -51,7 +51,9 @@ class AVWGCN(nn.Module):
         x_gconv1 = self.gconv(x_g1)
 
         # 3) fusion of explit knowledge and implicit knowledge
-        x_gconv = self.dy_gate1(F.leaky_relu(x_gconv0).transpose(1,2)) + self.dy_gate2(F.leaky_relu(x_gconv1).transpose(1,2))
-        # x_gconv = F.leaky_relu(x_gconv0) + F.leaky_relu(x_gconv1)
+        # x_gconv = self.dy_gate1(F.leaky_relu(x_gconv0).transpose(1,2)) + self.dy_gate2(F.leaky_relu(x_gconv1).transpose(1,2))
+        # x_gconv = F.leaky_relu(x_gconv0).transpose(1,2)
+        # x_gconv = F.leaky_relu(x_gconv1).transpose(1,2)
+        x_gconv = F.leaky_relu(x_gconv0) + F.leaky_relu(x_gconv1)
         
         return x_gconv.transpose(1,2)

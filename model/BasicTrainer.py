@@ -246,7 +246,10 @@ class Trainer(object):
                                                 args.mae_thresh, args.mape_thresh)
             logger.info("Horizon {:02d}, MAE: {:.4f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                 t + 1, mae, rmse, mape*100))
-        price_change = pd.read_csv('../util/pct_change.csv', index_col=0)
+        if args.dataset == 'nasdaq':
+            price_change = pd.read_csv('../data/nasdaq/pct_change.csv', index_col=0).iloc[20:]
+        else:
+            price_change = pd.read_csv('../util/pct_change.csv', index_col=0)/100
         data_len = int(args.test_ratio - args.lag)
         if y_pred.shape[0] == data_len:
             price_change = price_change[-data_len:].to_numpy()

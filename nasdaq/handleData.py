@@ -22,9 +22,11 @@ scaler = StandardScaler()
 
 # industry_path = '../data/nasdaq/industry_relation_Nasdaq.json'
 code_list_path = '../data/nasdaq/code_list.json'
+relation_path = '../data/nasdaq/raw_data/raw_relation_Nasdaq.json'
 stock_path = '../data/nasdaq/stock_list.json'
 code_list = []
 stock_relation = {}
+raw_sector_relation = {}
 with open(code_list_path, 'r', encoding='utf-8') as f:
     code_list = json.loads(f.read())
     code_list = list(code_list)
@@ -33,6 +35,8 @@ with open(code_list_path, 'r', encoding='utf-8') as f:
 with open(stock_path, 'r', encoding='utf-8') as f:
     stock_relation = json.loads(f.read())
 
+with open(relation_path, 'r', encoding='utf-8') as f:
+    raw_sector_relation = json.loads(f.read())
 date_list = pro.us_tradecal(start_date='20160301', end_date='20230301')
 date_list = list(date_list[date_list['is_open'] == 1]['cal_date'])
 date_list = list(reversed(date_list))
@@ -78,12 +82,14 @@ def getsectors(path='../data/sectors/'):
     start_date = int(date_list[0])
     end_date = int(date_list[-1])
     stock_num = 0
-    all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    # all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    # all_stock_list = all_stock_list[(all_stock_list['list_date'] < start_date)]
+    # all_stock_list = all_stock_list[
+    #     (np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date'] > end_date)]
+    # all_stock_list = list(all_stock_list['ts_code'])
+    all_stock_list = pd.read_csv('../data/nasdaq/nasdaq.csv')
+    all_stock_list = list(all_stock_list['Symbol'])
     mapping_keys = mapping.keys()
-    all_stock_list = all_stock_list[(all_stock_list['list_date'] < start_date)]
-    all_stock_list = all_stock_list[
-        (np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date'] > end_date)]
-    all_stock_list = list(all_stock_list['ts_code'])
     for i in range(147):
         p = path + 'sector{}.csv'.format(i+1)
         df = pd.read_csv(p)
@@ -123,10 +129,12 @@ def drop_delist(stock_relation, code_list, date_list):
     start_date = int(date_list[0])
     end_date = int(date_list[-1])
     stock_num = 0
-    all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
-    all_stock_list = all_stock_list[(all_stock_list['list_date']<start_date)]
-    all_stock_list = all_stock_list[(np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date']>end_date)]
-    all_stock_list = list(all_stock_list['ts_code'])
+    # all_stock_list = pd.read_csv('../data/rpsdata/all_nasdaq_stock.csv', index_col=0)
+    # all_stock_list = all_stock_list[(all_stock_list['list_date']<start_date)]
+    # all_stock_list = all_stock_list[(np.isnan(all_stock_list['delist_date'])) | (all_stock_list['delist_date']>end_date)]
+    # all_stock_list = list(all_stock_list['ts_code'])
+    all_stock_list = pd.read_csv('../data/nasdaq/nasdaq.csv', index_col=0)
+    all_stock_list = list(all_stock_list['Symbol'])
     for code in code_list:
         stock_list = stock_relation.get(code)
         for i in range(len(stock_list)-1,-1,-1):
@@ -142,7 +150,20 @@ def drop_delist(stock_relation, code_list, date_list):
     with open('../data/rpsdata/new_nasdaq_stock.json', 'w+') as f:
         json.dump(stock_relation, f)
 
-def cal_sector():
+def relation_info(sector_relation):
+    node_num = 0
+    relation_num = 0
+    for key in sector_relation.keys():
+        sector_list = sector_relation.get(key)
+        node = len(sector_list)
+        node_num += node
+        relation_num += node * (node - 1)/2
+    print('有{}个板块分类'.format(len(sector_relation.keys())))
+    print('有{}个节点'.format(node_num))
+    print('有{}个关联边'.format(relation_num))
+
+
+def cal_sector(code_list=code_list):
     start_date = date_list[0]
     end_date = date_list[-1]
     new_date_list = date_list
@@ -160,7 +181,7 @@ def cal_sector():
             single_df = ak.stock_us_hist(symbol=code, period='daily', start_date=start_date,
                                                           end_date=end_date, adjust="")
             single_df['日期'] = single_df['日期'].replace('-', '')
-            single_df['mkt'] = single_df['成交量']/single_df['换手率'] * single_df['收盘']
+            single_df['mkt'] = single_df['成交量']/single_df['换手率'] * 100 * single_df['收盘']
             single_df['mkt'] = single_df['mkt'].replace([np.inf, -np.inf], np.nan)
             single_df['mkt'] = single_df['mkt'].fillna(0)
             industry_df = pd.concat([industry_df, single_df])
@@ -181,15 +202,15 @@ def cal_sector():
             tmp['开盘'] = avg_mkt * tmp['开盘']
             tmp['最高'] = avg_mkt * tmp['最高']
             tmp['最低'] = avg_mkt * tmp['最低']
-            turn_over = tmp['换手率'].fillna(0).sum()
+            turn_over = tmp['换手率'].fillna(0).sum()/100
             close = tmp['收盘'].fillna(0).sum()
-            open = tmp['开盘'].fillna(0).sum()
+            open_price = tmp['开盘'].fillna(0).sum()
             high = tmp['最高'].fillna(0).sum()
             low = tmp['最低'].fillna(0).sum()
             vol = tmp['成交量'].fillna(0).sum()
             industry_turn_over.append(turn_over)
             industry_close.append(close)
-            industry_open.append(open)
+            industry_open.append(open_price)
             industry_high.append(high)
             industry_low.append(low)
             industry_vol.append(vol)
@@ -225,8 +246,34 @@ def cal_sector():
     df_high.iloc[1:].to_csv('../data/nasdaq/high_price.csv')
     df_low.iloc[1:].to_csv('../data/nasdaq/low_price.csv')
     df_vol.iloc[1:].to_csv('../data/nasdaq/volume.csv')
+    code_list = list(df_pct.columns)
+    new_sector_relation = {}
+    for key in raw_sector_relation.keys():
+        sector_list = raw_sector_relation.get(key)
+        new_list = []
+        for sector in sector_list:
+            if sector in code_list:
+                new_list.append(sector)
+        new_sector_relation[key] = new_list
 
+    for key in stock_relation:
+        if key not in stock_relation.keys():
+            stock_relation.pop(key)
+    with open('../data/nasdaq/stock_list.json', 'w+') as f:
+        json.dump(stock_relation, f)
+    with open('../data/nasdaq/industry_relation_Nasdaq.json', 'w+') as f:
+        json.dump(new_sector_relation, f)
+    with open('../data/nasdaq/code_list.json', 'w+') as f:
+        json.dump(code_list, f)
+    relation_info(new_sector_relation)
 # cal_sector()
+
+
+
+def generate_code_list():
+    code_list = list(stock_relation.keys())
+    with open('../data/nasdaq/code_list.json', 'w+') as f:
+        json.dump(code_list, f)
 
 def up_limit():
     start_date = date_list[21]
@@ -250,12 +297,13 @@ def up_limit():
             #         print(i)
             industry_df =  industry_df.set_index('日期')
             print(stock_code)
-            up_limit_list = up_limit_list.add((industry_df['涨跌幅'] >= 0.1) + 0, fill_value = 0)
+            up_limit_list = up_limit_list.add((industry_df['涨跌幅'] >= 10) + 0, fill_value = 0)
         fct[industry_code] = up_limit_list
 
     print(up_limit_dict)
     fct = fct.fillna(0)
     fct.to_csv('../data/nasdaq/up_limit_dict.csv')
 
-# up_limit()
+# generate_code_list()
+up_limit()
 

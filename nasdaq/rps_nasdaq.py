@@ -131,6 +131,74 @@ def get_reli_datatype():
     with open('../data/nasdaq/p_label_reli.json','w+') as f :
         json.dump(dicts,f)
 
+def get_reli_datatype():
+    industrys_list=[]
+    times_list=[]
+    dicts1={}
+    dicts3={}
+    dicts5={}
+    dicts10={}
+    dicts15={}
+    dicts20={}
+    dicts={}
+    with open('../data/nasdaq/p_label.json','r',encoding='utf-8') as f :
+            loads = json.loads(f.read())
+            times_list=loads['date']
+            times_list = list(map(str, times_list))
+            industrys_list = loads['code']
+            # for ind in industrys_list:
+            #     name=df.at[ind,'industry_name']
+            #     names_list.append(name)
+            # for name in names_list:
+            for ind in industrys_list:
+                    # name=df.at[ind,'industry_name']
+                    price_list1=[]
+                    price_list3=[]
+                    price_list5=[]
+                    price_list10=[]
+                    price_list15=[]
+                    price_list20=[]
+
+                    for mytime in times_list:
+                        price_list1.append(loads['data'][mytime]['1'][ind])
+                        price_list3.append(loads['data'][mytime]['3'][ind])
+                        price_list5.append(loads['data'][mytime]['5'][ind])
+                        price_list10.append(loads['data'][mytime]['10'][ind])
+                        price_list15.append(loads['data'][mytime]['15'][ind])
+                        price_list20.append(loads['data'][mytime]['20'][ind])
+                        # print(loads[mytime]['50'][ind])
+                    # print(price_list10)
+                    times_list=list(times_list)
+                    dicts1['time']=times_list
+                    dicts3['time']=times_list
+                    dicts5['time']=times_list
+                    dicts10['time']=times_list
+                    dicts15['time']=times_list
+                    dicts20['time']=times_list
+                    dicts1['name']=industrys_list
+                    dicts3['name']=industrys_list
+                    dicts5['name']=industrys_list
+                    dicts10['name']=industrys_list
+                    dicts15['name']=industrys_list
+                    dicts20['name']=industrys_list
+                    dicts1[ind]=price_list1
+                    dicts3[ind]=price_list3
+                    dicts5[ind]=price_list5
+                    dicts10[ind]=price_list10
+                    dicts15[ind]=price_list15
+                    dicts20[ind]=price_list20
+            dicts[1]=dicts1
+            dicts[3]=dicts3
+            dicts[5]=dicts5
+            dicts[10]=dicts10
+            dicts[15]=dicts15
+            dicts[20]=dicts20
+
+    with open('../data/nasdaq/p_label_relio.json','w+') as f :
+        json.dump(dicts,f)
+
+
+
 # 获取json格式的文件
 def get_json_lists():
 

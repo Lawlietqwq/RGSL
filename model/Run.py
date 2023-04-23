@@ -36,8 +36,8 @@ DEBUG = 'False'
 DATASET = 'rpsdata'      #PEMSD4 or PEMSD8
 # DATASET = 'PEMSD8'      #PEMSD4 or PEMSD8
 DEVICE = 'cuda:0'
-MODEL = 'RGSL'
-# MODEL = 'GRU'
+# MODEL = 'RGSL'
+MODEL = 'GRU'
 NAME = 'nasdaq'
 # NAME = 'rpsdata'
 #get configuration

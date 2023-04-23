@@ -18,7 +18,7 @@ scaler = StandardScaler()
 json_file_path='../data/nasdaq/'
 # json_file_name=json_file_path+'label_reli.json'
 # json_file_nameo=json_file_path+'label_relio.json'
-json_file_nameo=json_file_path+'p_label_reli.json'
+json_file_nameo=json_file_path+'p_label_relio.json'
 json_file_name=json_file_path+'p_label_reli.json'
 
 

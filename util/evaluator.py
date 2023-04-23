@@ -8,7 +8,7 @@ import pandas as pd
 def evaluate(prediction,ground_truth,price_change,report=False):
 
     # assert ground_truth.shape == prediction.shape, 'shape mis-match'
-    price_change = price_change/100
+    price_change = price_change
     performance = {}
     # performance['mse'] = np.linalg.norm((prediction - ground_truth) * mask)**2\
     #     / np.sum(mask)
